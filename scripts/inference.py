@@ -66,7 +66,8 @@ def main():
     #     coordinator = None
     #     enable_sequence_parallelism = False
     if torch.cuda.device_count() > 1:
-        dist.init_process_group(backend='nccl')
+        if not dist.is_initialized()
+            dist.init_process_group(backend='nccl')
         print("ENTERING HERERERRERERE is DISTRIBUTED")
         colossalai.launch_from_torch({})
         coordinator = DistCoordinator()
@@ -321,6 +322,8 @@ def main():
         start_idx += len(batch_prompts)
     logger.info("Inference finished.")
     logger.info("Saved %s samples to %s", start_idx, save_dir)
+    if dist.is_initialized():
+        dist.destroy_process_group()
 
 
 if __name__ == "__main__":
