@@ -35,6 +35,7 @@ from opensora.utils.misc import all_exists, create_logger, is_distributed, is_ma
 
 
 def main():
+    torch.cuda.empty_cache()
     torch.set_grad_enabled(False)
     # ======================================================
     # configs & runtime variables
@@ -44,20 +45,23 @@ def main():
 
     # == device and dtype ==
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    cfg_dtype = cfg.get("dtype", "fp32")
+    cfg_dtype = "fp16" #cfg.get("dtype", "fp32")
     assert cfg_dtype in ["fp16", "bf16", "fp32"], f"Unknown mixed precision {cfg_dtype}"
-    dtype = to_torch_dtype(cfg.get("dtype", "bf16"))
+    dtype = to_torch_dtype("fp16")#cfg.get("dtype", "bf16"))
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
 
     # == init distributed env ==
     if is_distributed():
+        print("ENTERING HERERERRERERE is DISTRIBUTED")
         colossalai.launch_from_torch({})
         coordinator = DistCoordinator()
         enable_sequence_parallelism = True #coordinator.world_size > 1
         if enable_sequence_parallelism:
+            print("SETTTTING SEQUENCE PARALLEL GROUP", dist.group.WORLD)
             set_sequence_parallel_group(dist.group.WORLD)
     else:
+        print("ENTERING HERERER NOTTTT IS DISRIBUTED")
         coordinator = None
         enable_sequence_parallelism = False
     set_random_seed(seed=cfg.get("seed", 1024))
@@ -130,8 +134,8 @@ def main():
     fps = cfg.fps
     save_fps = cfg.get("save_fps", fps // cfg.get("frame_interval", 1))
     multi_resolution = cfg.get("multi_resolution", None)
-    batch_size = cfg.get("batch_size", 1)
-    num_sample = cfg.get("num_sample", 1)
+    batch_size = 1#cfg.get("batch_size", 1)
+    num_sample = 1#cfg.get("num_sample", 1)
     loop = cfg.get("loop", 1)
     condition_frame_length = cfg.get("condition_frame_length", 5)
     condition_frame_edit = cfg.get("condition_frame_edit", 0.0)
