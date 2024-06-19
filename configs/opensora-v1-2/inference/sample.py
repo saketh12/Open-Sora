@@ -10,21 +10,21 @@ seed = 42
 batch_size = 1
 multi_resolution = "STDiT2"
 dtype = "bf16"
-condition_frame_length = 5
+condition_frame_length = 3
 align = 5
 
 model = dict(
     type="STDiT3-XL/2",
     from_pretrained="hpcai-tech/OpenSora-STDiT-v3",
     qk_norm=True,
-    enable_flash_attn=True,
-    enable_layernorm_kernel=True,
+    enable_flash_attn=False,
+    enable_layernorm_kernel=False,
 )
 vae = dict(
     type="OpenSoraVAE_V1_2",
     from_pretrained="hpcai-tech/OpenSora-VAE-v1.2",
     micro_frame_size=17,
-    micro_batch_size=4,
+    micro_batch_size=2,
 )
 text_encoder = dict(
     type="t5",
