@@ -6,6 +6,7 @@ import colossalai
 import torch
 import torch.distributed as dist
 from colossalai.cluster import DistCoordinator
+from torch.nn.parallel import DistributedDataParallel as DDP
 from mmengine.runner import set_random_seed
 from tqdm import tqdm
 
@@ -52,18 +53,32 @@ def main():
     torch.backends.cudnn.allow_tf32 = True
 
     # == init distributed env ==
-    if is_distributed():
+    # if is_distributed():
+    #     print("ENTERING HERERERRERERE is DISTRIBUTED")
+    #     colossalai.launch_from_torch({})
+    #     coordinator = DistCoordinator()
+    #     enable_sequence_parallelism = True #coordinator.world_size > 1
+    #     if enable_sequence_parallelism:
+    #         print("SETTTTING SEQUENCE PARALLEL GROUP", dist.group.WORLD)
+    #         set_sequence_parallel_group(dist.group.WORLD)
+    # else:
+    #     print("ENTERING HERERER NOTTTT IS DISRIBUTED")
+    #     coordinator = None
+    #     enable_sequence_parallelism = False
+    if torch.cuda.device_count() > 1:
+        dist.init_process_group(backend='nccl')
         print("ENTERING HERERERRERERE is DISTRIBUTED")
         colossalai.launch_from_torch({})
         coordinator = DistCoordinator()
-        enable_sequence_parallelism = True #coordinator.world_size > 1
+        enable_sequence_parallelism = True  # coordinator.world_size > 1
         if enable_sequence_parallelism:
-            print("SETTTTING SEQUENCE PARALLEL GROUP", dist.group.WORLD)
+            print("SETTING SEQUENCE PARALLEL GROUP", dist.group.WORLD)
             set_sequence_parallel_group(dist.group.WORLD)
     else:
-        print("ENTERING HERERER NOTTTT IS DISRIBUTED")
+        print("ENTERING HERE NOT IS DISTRIBUTED")
         coordinator = None
         enable_sequence_parallelism = False
+
     set_random_seed(seed=cfg.get("seed", 1024))
 
     # == init logger ==
@@ -79,6 +94,11 @@ def main():
     # == build text-encoder and vae ==
     text_encoder = build_module(cfg.text_encoder, MODELS, device=device)
     vae = build_module(cfg.vae, MODELS).to(device, dtype).eval()
+
+    if torch.cuda.device_count() > 1:
+        print("HELLLOOO")
+        # text_encoder = DDP(text_encoder)
+        # vae = DDP(vae)
 
     # == prepare video size ==
     image_size = cfg.get("image_size", None)
